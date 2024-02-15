@@ -42,7 +42,7 @@ class PolynomialFeatures(SklPolynomialFeatures):
 
   def transform(self, X, *args, **kwargs):
     if type(X) == np.ndarray:
-      return super().transform(X.values, *args, **kwargs)
+      return super().transform(X, *args, **kwargs)
 
     if not isinstance(X, pd.core.frame.DataFrame):
       raise Exception("Feature input has wrong type. Please use pandas DataFrame")
@@ -88,7 +88,7 @@ class MinMaxScaler(SklMinMaxScaler):
 
   def transform(self, X, *args, **kwargs):
     if type(X) == np.ndarray:
-      return super().transform(X.values, *args, **kwargs)
+      return super().transform(X, *args, **kwargs)
 
     if not isinstance(X, pd.core.frame.DataFrame):
       raise Exception("Input has wrong type. Please use pandas DataFrame")
