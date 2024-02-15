@@ -3,6 +3,21 @@ import pandas as pd
 
 from sklearn.linear_model import LinearRegression as SklLinearRegression
 from sklearn.preprocessing import MinMaxScaler as SklMinMaxScaler
+from sklearn.preprocessing import PolynomialFeatures as SklPolynomialFeatures
+
+
+class PolynomialFeatures(SklPolynomialFeatures):
+  def __init__(self, **kwargs):
+    super().__init__(**kwargs)
+
+  def fit_transform(self, X, *args, **kwargs):
+    if not isinstance(X, pd.core.frame.DataFrame):
+      raise Exception("Feature input has wrong type. Please use pandas DataFrame")
+
+    self.columns = X.columns
+    self.shape = X.shape
+    X_t = super().fit_transform(X.values, *args, **kwargs)
+    return pd.DataFrame(X_t, columns=self.get_feature_names_out())
 
 
 class LinearRegression(SklLinearRegression):
