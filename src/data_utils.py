@@ -1,12 +1,31 @@
 import numpy as np
 import pandas as pd
 
+from sklearn.cluster import KMeans as SklKMeans, SpectralClustering as SklSpectralClustering
 from sklearn.ensemble import RandomForestClassifier as SklRandomForestClassifier
 from sklearn.linear_model import LinearRegression as SklLinearRegression
+from sklearn.metrics import mean_squared_error, accuracy_score
+from sklearn.mixture import GaussianMixture as SklGaussianMixture
 from sklearn.preprocessing import MinMaxScaler as SklMinMaxScaler
 from sklearn.preprocessing import StandardScaler as SklStandardScaler
 from sklearn.preprocessing import PolynomialFeatures as SklPolynomialFeatures
 
+
+def regression_error(labels, predicted):
+  if not (isinstance(labels, pd.core.frame.DataFrame) or isinstance(labels, pd.core.series.Series)):
+    raise Exception("truth labels has wrong type. Please use pandas DataFrame or Series")
+  if not (isinstance(predicted, pd.core.frame.DataFrame) or isinstance(predicted, pd.core.series.Series)):
+    raise Exception("predicted labels has wrong type. Please use pandas DataFrame or Series")
+
+  return mean_squared_error(labels.values, predicted.values, squared=False)
+
+def classification_error(labels, predicted):
+  if not (isinstance(labels, pd.core.frame.DataFrame) or isinstance(labels, pd.core.series.Series)):
+    raise Exception("truth labels has wrong type. Please use pandas DataFrame or Series")
+  if not (isinstance(predicted, pd.core.frame.DataFrame) or isinstance(predicted, pd.core.series.Series)):
+    raise Exception("predicted labels has wrong type. Please use pandas DataFrame or Series")
+
+  return 1.0 - accuracy_score(labels.values, predicted.values)
 
 class PolynomialFeatures(SklPolynomialFeatures):
   def __init__(self, **kwargs):
@@ -111,13 +130,57 @@ class Scaler():
       return pd.DataFrame(X_t, columns=X.columns)
 
 
-class MinMaxScaler(Scaler):
-  def __init__(self, **kwargs):
-    super().__init__("minmax", **kwargs)
+class Clusterer():
+  def __init__(self, type, **kwargs):
+    self.num_clusters = 0
+    if type == "kmeans":
+      self.model = SklKMeans(**kwargs)
+    elif type == "gaussian":
+      if "n_clusters" in kwargs:
+        kwargs["n_components"] = kwargs["n_clusters"]
+        del kwargs["n_clusters"]
+      self.model = SklGaussianMixture(**kwargs)
+    elif type == "spectral":
+      if "affinity" not in kwargs:
+        kwargs["affinity"] = 'nearest_neighbors'
+      self.model = SklSpectralClustering(**kwargs)
 
-class StandardScaler(Scaler):
-  def __init__(self, **kwargs):
-    super().__init__("std", **kwargs)
+  def fit_predict(self, X, *args, **kwargs):
+    if not isinstance(X, pd.core.frame.DataFrame):
+      raise Exception("Input has wrong type. Please use pandas DataFrame")
+
+    y = self.model.fit_predict(X.values, *args, **kwargs)
+    self.X = X.values
+    self.y = y
+    self.num_clusters = len(np.unique(y))
+    return pd.DataFrame(y, columns=["clusters"])
+
+  def get_cluster_centers(self):
+    if self.num_clusters < 1:
+      raise Exception("Error: need to run fit_predict() first")
+
+    return np.array([self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)])
+
+  def score(self):
+    centers = self.get_cluster_centers()
+    point_centers = [centers[i] for i in self.y]
+    point_diffs = [p - c for p, c in zip(self.X, point_centers)]
+    point_L2 = np.sqrt(np.square(point_diffs).sum(axis=1))
+    return point_L2.sum()
+
+  def log_score(self):
+    means = [self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)]
+    stds = [self.X[self.y == c].std(axis=0) for c in range(self.num_clusters)]
+    point_means = [means[i] for i in self.y]
+    point_stds = [sum(stds[i]*stds[i])**0.5 for i in self.y]
+
+    point_dists = np.array([np.square(p - c).sum() for p, c in zip(self.X, point_means)])
+
+    sqrt_2pi = (2*np.pi) ** 0.5
+    point_loglike = np.array([(1/s*sqrt_2pi) * np.exp(-d/(2*s*s)) for d, s in zip(point_dists, point_stds)])
+
+    return abs(np.log(point_loglike).sum())
+
 
 class LinearRegression(Predictor):
   def __init__(self, **kwargs):
@@ -126,3 +189,23 @@ class LinearRegression(Predictor):
 class RandomForestClassifier(Predictor):
   def __init__(self, **kwargs):
     super().__init__("class", **kwargs)
+
+class MinMaxScaler(Scaler):
+  def __init__(self, **kwargs):
+    super().__init__("minmax", **kwargs)
+
+class StandardScaler(Scaler):
+  def __init__(self, **kwargs):
+    super().__init__("std", **kwargs)
+
+class KMeans(Clusterer):
+  def __init__(self, **kwargs):
+    super().__init__("kmeans", **kwargs)
+
+class GaussianMixture(Clusterer):
+  def __init__(self, **kwargs):
+    super().__init__("gaussian", **kwargs)
+
+class SpectralClustering(Clusterer):
+  def __init__(self, **kwargs):
+    super().__init__("spectral", **kwargs)
