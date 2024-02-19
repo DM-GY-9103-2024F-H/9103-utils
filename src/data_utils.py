@@ -58,6 +58,8 @@ class Predictor():
     if type == "linear":
       self.model = SklLinearRegression(**kwargs)
     elif type == "class":
+      if "max_depth" not in kwargs:
+        kwargs["max_depth"]=16
       self.model = SklRandomForestClassifier(**kwargs)
 
   def fit(self, X, y, *args, **kwargs):
@@ -133,6 +135,7 @@ class Scaler():
 class Clusterer():
   def __init__(self, type, **kwargs):
     self.num_clusters = 0
+    kwargs["n_init"] = 10
     if type == "kmeans":
       self.model = SklKMeans(**kwargs)
     elif type == "gaussian":
@@ -143,6 +146,8 @@ class Clusterer():
     elif type == "spectral":
       if "affinity" not in kwargs:
         kwargs["affinity"] = 'nearest_neighbors'
+      if "n_clusters" in kwargs:
+        kwargs["n_clusters"] += 1
       self.model = SklSpectralClustering(**kwargs)
 
   def fit_predict(self, X, *args, **kwargs):
