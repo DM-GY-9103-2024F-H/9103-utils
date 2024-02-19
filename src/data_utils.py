@@ -168,19 +168,6 @@ class Clusterer():
     point_L2 = np.sqrt(np.square(point_diffs).sum(axis=1))
     return point_L2.sum()
 
-  def log_error(self):
-    means = [self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)]
-    stds = [self.X[self.y == c].std(axis=0) for c in range(self.num_clusters)]
-    point_means = [means[i] for i in self.y]
-    point_stds = [sum(stds[i]*stds[i])**0.5 for i in self.y]
-
-    point_dists = np.array([np.square(p - c).sum() for p, c in zip(self.X, point_means)])
-
-    sqrt_2pi = (2*np.pi) ** 0.5
-    point_loglike = np.array([(1/s*sqrt_2pi) * np.exp(-d/(2*s*s)) for d, s in zip(point_dists, point_stds)])
-
-    return abs(np.log(point_loglike).sum())
-
 
 class LinearRegression(Predictor):
   def __init__(self, **kwargs):
