@@ -161,14 +161,14 @@ class Clusterer():
 
     return np.array([self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)])
 
-  def score(self):
+  def error(self):
     centers = self.get_cluster_centers()
     point_centers = [centers[i] for i in self.y]
     point_diffs = [p - c for p, c in zip(self.X, point_centers)]
     point_L2 = np.sqrt(np.square(point_diffs).sum(axis=1))
     return point_L2.sum()
 
-  def log_score(self):
+  def log_error(self):
     means = [self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)]
     stds = [self.X[self.y == c].std(axis=0) for c in range(self.num_clusters)]
     point_means = [means[i] for i in self.y]
