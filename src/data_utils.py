@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from numpy.linalg import det as np_det, inv as np_inv
+
 from sklearn.cluster import KMeans as SklKMeans, SpectralClustering as SklSpectralClustering
 from sklearn.ensemble import RandomForestClassifier as SklRandomForestClassifier
 from sklearn.linear_model import LinearRegression as SklLinearRegression
@@ -158,20 +160,41 @@ class Clusterer():
     self.X = X.values
     self.y = y
     self.num_clusters = len(np.unique(y))
+    self.num_features = self.X.shape[1]
     return pd.DataFrame(y, columns=["clusters"])
 
-  def get_cluster_centers(self):
+  def distance_error(self):
     if self.num_clusters < 1:
       raise Exception("Error: need to run fit_predict() first")
 
-    return np.array([self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)])
-
-  def error(self):
-    centers = self.get_cluster_centers()
+    centers = np.array([self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)])
     point_centers = [centers[i] for i in self.y]
-    point_diffs = [p - c for p, c in zip(self.X, point_centers)]
-    point_L2 = np.sqrt(np.square(point_diffs).sum(axis=1))
-    return point_L2.sum()
+    point_diffs = np.array([p - c for p,c in zip(self.X, point_centers)])
+
+    cluster_L2 = [np.sqrt(np.square(point_diffs[self.y == c]).sum(axis=1)).mean() for c in range(self.num_clusters)]
+
+    return sum(cluster_L2) / len(cluster_L2)
+
+  def likelihood_error(self):
+    if self.num_clusters < 1:
+      raise Exception("Error: need to run fit_predict() first")
+
+    # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Density_function
+    means = np.array([self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)])
+    covs = np.array([np.cov(self.X[self.y==c].transpose()) for c in range(self.num_clusters)])
+
+    point_means = [means[i] for i in self.y]
+    point_covs = [covs[i] for i in self.y]
+
+    two_pi_term = np.power(2 * np.pi, self.num_features)
+
+    point_density_den = [np.sqrt(two_pi_term * np_det(cov)) for cov in point_covs]
+    point_density_num = [np.exp(-0.5 * (p - m) @ np_inv(cov) @ (p - m)) for p,m,cov in zip(self.X, point_means, point_covs)]
+    point_density = np.array(point_density_num) / np.array(point_density_den)
+
+    cluster_log_like = [np.log(point_density[self.y == c]).mean() for c in range(self.num_clusters)]
+
+    return sum(cluster_log_like) / len(cluster_log_like)
 
 
 class LinearRegression(Predictor):
@@ -190,11 +213,11 @@ class StandardScaler(Scaler):
   def __init__(self, **kwargs):
     super().__init__("std", **kwargs)
 
-class KMeans(Clusterer):
+class KMeansClustering(Clusterer):
   def __init__(self, **kwargs):
     super().__init__("kmeans", **kwargs)
 
-class GaussianMixture(Clusterer):
+class GaussianClustering(Clusterer):
   def __init__(self, **kwargs):
     super().__init__("gaussian", **kwargs)
 
