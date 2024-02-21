@@ -5,6 +5,15 @@ import urllib.request as request
 import wave
 
 
+## Print Lists
+
+def print_list_with_index(l):
+  frmt = "{:>5},"*(len(l) - 1) + "{:>5}"
+  ls = '[' + frmt.format(*range(10)) + ']\n'
+  ls += '[' + frmt.format(*l) + ']\n'
+  print(ls)
+
+
 ## Data Files
 
 def object_from_json_url(url):
