@@ -196,6 +196,11 @@ class Clusterer():
 
     return sum(cluster_log_like) / len(cluster_log_like)
 
+  def balance_error(self):
+    if self.num_clusters < 1:
+      raise Exception("Error: need to run fit_predict() first")
+    counts = np.unique(self.y, return_counts=True)[1]
+    return np.abs(counts/self.y.sum() - (1/self.num_clusters)).max()
 
 class LinearRegression(Predictor):
   def __init__(self, **kwargs):
