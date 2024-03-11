@@ -149,7 +149,7 @@ class Clusterer():
       if "affinity" not in kwargs:
         kwargs["affinity"] = 'nearest_neighbors'
       if "n_clusters" in kwargs:
-        kwargs["n_clusters"] += 1
+        kwargs["n_clusters"] += 0
       self.model = SklSpectralClustering(**kwargs)
 
   def fit_predict(self, X, *args, **kwargs):
