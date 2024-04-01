@@ -27,11 +27,14 @@ def wav_to_list(wav_filename):
   with wave.open(wav_filename, mode="rb") as wav_in:
     if wav_in.getsampwidth() != 2:
       raise Exception("Input not 16-bit")
-    if wav_in.getnchannels() != 1:
-      raise Exception("Input mono")
 
-    xb = wav_in.readframes(wav_in.getnframes())
-    return list(np.frombuffer(xb, dtype=np.int16))
+    nchannels = wav_in.getnchannels()
+    nframes = wav_in.getnframes()
+    nsamples = nchannels * nframes
+    xb = wav_in.readframes(nframes)
+    b_np = np.frombuffer(xb, dtype=np.int16)
+
+    return [int(sum(b_np[b0 : b0 + nchannels]) / nchannels) for b0 in range(0, nsamples, nchannels)]
 
 def list_to_wav(wav_array, wav_filename):
   xb = np.array(wav_array, dtype=np.int16).tobytes()
