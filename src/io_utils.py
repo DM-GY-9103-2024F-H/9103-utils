@@ -4,6 +4,7 @@ import PIL.Image as Image
 import urllib.request as request
 import wave
 
+from sklearn.cluster import KMeans
 
 ## Print Lists
 
@@ -43,6 +44,63 @@ def list_to_wav(wav_array, wav_filename):
     wav_out.setsampwidth(2)
     wav_out.setframerate(44100)
     wav_out.writeframes(xb)
+
+
+# Audio Analysis Functions
+
+def logFilter(x, factor=3):
+  if factor < 1:
+    return x
+  else:
+    return np.exp(factor * np.log(x)) // np.power(10, factor*5)
+
+def fft(samples, filter_factor=3):
+  _fft = logFilter(np.abs(np.fft.fft(samples * np.hanning(len(samples))))[ :len(samples) // 2], filter_factor).tolist()
+  num_samples = len(_fft)
+  hps = (44100//2) / num_samples
+  _freqs = [s * hps for s in range(num_samples)]
+  return _fft, _freqs
+
+def stft(samples, window_len=1024):
+  _times = list(range(0, len(samples), window_len))
+
+  sample_windows = []
+  for s in _times:
+    sample_windows.append(samples[s : s + window_len])
+
+  sample_windows[-1] = (sample_windows[-1] + len(sample_windows[0]) * [0])[:len(sample_windows[0])]
+  _ffts = [np.log(fft(s, filter_factor=0)[0]).tolist() for s in sample_windows]
+  _, _freqs = fft(sample_windows[0], filter_factor=0)
+  return _ffts, _freqs, _times
+
+def cluster_fft_freqs(energy_freqs, freqs=None, *, top=50, clusters=6):
+  if freqs is not None:
+    energy_freqs = [(e, round(f)) for e,f in zip(energy_freqs, freqs)]
+
+  fft_sorted = sorted(energy_freqs, key=lambda x: x[0], reverse=True)[:top]
+  top_freqs = [[f[1]] for f in fft_sorted]
+
+  kmeans = KMeans(n_clusters=clusters, n_init="auto").fit(top_freqs)
+  return np.sort(kmeans.cluster_centers_, axis=0)[:, 0].astype(np.int16).tolist()
+
+def ifft(fs):
+  return np.fft.fftshift(np.fft.irfft(fs)).tolist()
+
+def tone(freq, length_seconds, amp=4096, sr=44100):
+  length_samples = length_seconds * sr
+  t = range(0, length_samples)
+  ham = np.hamming(length_samples)
+  two_pi = 2.0 * np.pi
+  return np.array([amp * np.sin(two_pi * freq * x / sr) for x in t] * ham).astype(np.int16).tolist()
+
+def tone_slide(freq0, freq1, length_seconds, amp=4096, sr=44100):
+  length_samples = length_seconds * sr
+  t = range(0, length_samples)
+  ham = np.hamming(length_samples)
+  two_pi = 2.0 * np.pi
+  f0 = min(freq0, freq1)
+  f_diff = max(freq0, freq1) - f0
+  return np.array([amp * np.sin(two_pi * (f0 + x / length_samples * f_diff) * x / sr) for x in t] * ham).astype(np.int16).tolist()
 
 
 ## Image Files
