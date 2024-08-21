@@ -4,7 +4,11 @@ import PIL.Image as Image
 import urllib.request as request
 import wave
 
+from math import exp
+from PIL import ImageFilter
+from scipy.ndimage import convolve
 from sklearn.cluster import KMeans
+
 
 ## Print Lists
 
@@ -143,3 +147,49 @@ def get_Image(input, width=None, height=None):
   else:
     raise Exception("wrong input type")
   return mimg
+
+
+## Image Analyssis
+
+def constrain_uint8(v):
+  return int(min(max(v, 0), 255))
+
+def blur(img, rad=1.0):
+  return img.filter(ImageFilter.GaussianBlur(rad))
+
+def edges_rgb(img, rad=1.0):
+  bimg = blur(img, rad)
+  pxs = get_pixels(img)
+  bpxs = get_pixels(bimg)
+
+  bdiffpx = []
+  for (r0,g0,b0), (r1,g1,b1) in zip(bpxs, pxs):
+    bdiffpx.append((
+      constrain_uint8(exp(r1-r0)),
+      constrain_uint8(exp(g1-g0)),
+      constrain_uint8(exp(b1-b0)),
+    ))
+  return get_Image(bdiffpx, img.size[0])
+
+def edges(img, rad=1.0):
+  bimg = blur(img, rad)
+  pxs = get_pixels(img.convert("L"))
+  bpxs = get_pixels(bimg.convert("L"))
+
+  bdiffpx = []
+  for l0, l1 in zip(bpxs, pxs):
+    bdiffpx.append(constrain_uint8(exp(l1-l0)))
+  return get_Image(bdiffpx, img.size[0])
+
+def conv2d(img, kernel):
+  pxs = np.array(img.convert("L").getdata()).reshape(img.size[1], -1).astype(np.uint8)
+  krl = np.array(kernel)
+  cpxs = convolve(pxs, krl).reshape(-1).astype(np.uint8).tolist()
+  return get_Image(cpxs, img.size[0])
+
+def conv2drgb(img, kernel):
+  pxs = np.array(img.getdata()).reshape(img.size[1], -1, 3).astype(np.uint8)
+  krl = np.repeat(np.array(kernel).reshape(len(kernel), len(kernel[0]), 1), 3, axis=2)
+  _cpxs = convolve(pxs, krl).reshape(-1, 3).astype(np.uint8).tolist()
+  cpxs = [(r,g,b) for r,g,b in _cpxs]
+  return get_Image(cpxs, img.size[0])
