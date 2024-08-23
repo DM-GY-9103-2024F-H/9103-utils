@@ -1,11 +1,11 @@
 import json
 import numpy as np
-import PIL.Image as Image
+import PIL.Image as PImage
 import urllib.request as request
 import wave
 
 from math import exp
-from PIL import ImageFilter
+from PIL import ImageFilter as PImageFilter
 from scipy.ndimage import convolve
 from sklearn.cluster import KMeans
 
@@ -109,43 +109,36 @@ def tone_slide(freq0, freq1, length_seconds, amp=4096, sr=44100):
 
 ## Image Files
 
-def get_pixels(input):
-  if type(input) is str:
-    mimg = Image.open(input)
-  elif isinstance(input, Image.Image):
-    mimg = input
-  else:
-    raise Exception("wrong input type")
-  return  list(mimg.getdata())
-
-def get_Image(input, width=None, height=None):
-  if type(input) is str:
-    mimg = Image.open(input)
-  elif type(input) is list:
-    pxs = input
-    num_channel = 1
-    if type(pxs[0]) is list or type(pxs[0]) is tuple:
-      num_channel = len(pxs[0])
-
-    img_mode = "L"
-    if num_channel == 3:
-      img_mode = "RGB"
-    elif num_channel == 4:
-      img_mode = "RGBA"
-
-    w,h = width, height
-    if width == None:
-      w = int(len(pxs) ** 0.5)
-      h = w
-    elif height == None:
-      h = int(len(pxs) / w)
-
-    pxs = pxs[:w * h]
-
-    mimg = Image.new(img_mode, (w, h))
+def update_pixels(mimg):
+  def _update_pixels(pxs):
+    if len(pxs) != mimg.size[0] * mimg.size[1]:
+      raise Exception("array has wrong length")
+    if not (type(pxs[0]) is int or type(pxs[0]) is tuple):
+      raise Exception("array has wrong content type: must be int or tuple")
+    if type(pxs[0]) is tuple and len(pxs[0]) != len(mimg.getbands()):
+      raise Exception("array has wrong content format: number of channels must match original")
+    if type(pxs[0]) is int and len(mimg.getbands()) != 1:
+      pxs = [tuple([p]*len(mimg.getbands())) for p in pxs]
     mimg.putdata(pxs)
-  else:
-    raise Exception("wrong input type")
+    mimg.pixels = list(mimg.getdata())
+  return _update_pixels
+
+def copy_image(mimg):
+  super_copy = mimg.copy
+  def _copy():
+    cimg = super_copy()
+    cimg.pixels = mimg.pixels[:]
+    cimg.update_pixels = update_pixels(cimg)
+    cimg.copy = copy_image(cimg)
+    return cimg
+  return _copy
+
+def open_image(path):
+  mimg = PImage.open(path)
+  mimg.pixels = list(mimg.getdata())
+
+  mimg.copy = copy_image(mimg)
+  mimg.update_pixels = update_pixels(mimg)
   return mimg
 
 
@@ -155,12 +148,15 @@ def constrain_uint8(v):
   return int(min(max(v, 0), 255))
 
 def blur(img, rad=1.0):
-  return img.filter(ImageFilter.GaussianBlur(rad))
+  cimg = img.copy()
+  bimg = img.filter(PImageFilter.GaussianBlur(rad))
+  cimg.update_pixels(list(bimg.getdata()))
+  return cimg
 
 def edges_rgb(img, rad=1.0):
   bimg = blur(img, rad)
-  pxs = get_pixels(img)
-  bpxs = get_pixels(bimg)
+  pxs = img.pixels
+  bpxs = bimg.pixels
 
   bdiffpx = []
   for (r0,g0,b0), (r1,g1,b1) in zip(bpxs, pxs):
@@ -169,27 +165,42 @@ def edges_rgb(img, rad=1.0):
       constrain_uint8(exp(g1-g0)),
       constrain_uint8(exp(b1-b0)),
     ))
-  return get_Image(bdiffpx, img.size[0])
+  bimg.update_pixels(bdiffpx)
+  return bimg
 
 def edges(img, rad=1.0):
   bimg = blur(img, rad)
-  pxs = get_pixels(img.convert("L"))
-  bpxs = get_pixels(bimg.convert("L"))
+  pxs = img.pixels
+  bpxs = bimg.pixels
 
   bdiffpx = []
-  for l0, l1 in zip(bpxs, pxs):
-    bdiffpx.append(constrain_uint8(exp(l1-l0)))
-  return get_Image(bdiffpx, img.size[0])
+  for (r0,g0,b0), (r1,g1,b1) in zip(bpxs, pxs):
+    bdiffpx.append(constrain_uint8(exp(r1-r0)))
+
+  bimg.update_pixels(bdiffpx)
+  return bimg
 
 def conv2d(img, kernel):
   pxs = np.array(img.convert("L").getdata()).reshape(img.size[1], -1).astype(np.uint8)
   krl = np.array(kernel)
   cpxs = convolve(pxs, krl).reshape(-1).astype(np.uint8).tolist()
-  return get_Image(cpxs, img.size[0])
+
+  # returns plain PImage
+  w,h = img.size
+  nimg = PImage.new(img.getbands(), (w, h))
+  nimg.putdata(cpxs)
+
+  return nimg
 
 def conv2drgb(img, kernel):
   pxs = np.array(img.getdata()).reshape(img.size[1], -1, 3).astype(np.uint8)
   krl = np.repeat(np.array(kernel).reshape(len(kernel), len(kernel[0]), 1), 3, axis=2)
   _cpxs = convolve(pxs, krl).reshape(-1, 3).astype(np.uint8).tolist()
   cpxs = [(r,g,b) for r,g,b in _cpxs]
-  return get_Image(cpxs, img.size[0])
+
+  # returns plain PImage
+  w,h = img.size
+  nimg = PImage.new(img.getbands(), (w, h))
+  nimg.putdata(cpxs)
+
+  return nimg
