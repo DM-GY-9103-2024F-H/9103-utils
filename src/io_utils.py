@@ -110,15 +110,27 @@ def tone_slide(freq0, freq1, length_seconds, amp=4096, sr=44100):
 ## Image Files
 
 def update_pixels(mimg):
-  def _update_pixels(pxs):
+  def _update_pixels(pxs, width=None, height=None):
     if len(pxs) != mimg.size[0] * mimg.size[1]:
       raise Exception("array has wrong length")
     if not (type(pxs[0]) is int or type(pxs[0]) is tuple):
       raise Exception("array has wrong content type: must be int or tuple")
+
+    if type(pxs[0]) is int and len(mimg.getbands()) != 1:
+      pxs = [(p, p, p) for p in pxs]
+
+    if type(pxs[0]) is tuple and len(mimg.getbands()) > len(pxs[0]):
+      pxs = [(r,g,b,255) for r,g,b in pxs]
+
+    if type(pxs[0]) is tuple and len(pxs[0]) > len(mimg.getbands()) and len(mimg.getbands()) == 1:
+      pxs = [(rgb[0]+rgb[1]+rgb[2])//3 for rgb in pxs]
+
+    if type(pxs[0]) is tuple and len(pxs[0]) > len(mimg.getbands()) and len(mimg.getbands()) != 1:
+      pxs = [(rgb[0], rgb[1], rgb[2]) for rgb in pxs]
+
     if type(pxs[0]) is tuple and len(pxs[0]) != len(mimg.getbands()):
       raise Exception("array has wrong content format: number of channels must match original")
-    if type(pxs[0]) is int and len(mimg.getbands()) != 1:
-      pxs = [tuple([p]*len(mimg.getbands())) for p in pxs]
+
     mimg.putdata(pxs)
     mimg.pixels = list(mimg.getdata())
   return _update_pixels
