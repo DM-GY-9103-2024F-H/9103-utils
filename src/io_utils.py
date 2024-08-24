@@ -111,8 +111,22 @@ def tone_slide(freq0, freq1, length_seconds, amp=4096, sr=44100):
 
 def update_pixels(mimg):
   def _update_pixels(pxs, width=None, height=None):
-    if len(pxs) != mimg.size[0] * mimg.size[1]:
-      raise Exception("array has wrong length")
+    iw, ih = mimg.size
+    if len(pxs) != iw * ih:
+      ar = ih / iw
+      nw = int((len(pxs) / ar) ** 0.5) if width is None else width
+      nh = int(len(pxs) // nw) if height is None else height
+      if nw <= iw and nh <= ih:
+        dw = max(0, iw - nw)
+        dh = max(0, ih - nh)
+        nc = len(pxs[0]) if type(pxs[0]) is tuple else 1
+        nppxs = np.array(pxs[ :nw * nh]).reshape(nh, nw, nc)
+        pcols = np.hstack((nppxs, np.zeros((nh,dw,nc), np.int8)))
+        prows = np.vstack((pcols, np.zeros((dh,iw,nc), np.int8)))
+        pxs = [tuple(v) if nc > 1 else v for v in prows.reshape(-1,nc).tolist()]
+      else:
+        raise Exception("pixel array is too big for image")
+
     if not (type(pxs[0]) is int or type(pxs[0]) is tuple):
       raise Exception("array has wrong content type: must be int or tuple")
 
@@ -153,6 +167,19 @@ def open_image(path):
   mimg.update_pixels = update_pixels(mimg)
   return mimg
 
+def make_image(pxs, width=None, height=None):
+  MODES = ["", "L", "XX", "RGB", "RGBA"]
+  nw = int(len(pxs) ** 0.5) if width is None else width
+  nh = int(len(pxs) // nw) if height is None else height
+  nc = len(pxs[0]) if type(pxs[0]) is tuple else 1
+
+  mimg = PImage.new(MODES[nc], (nw,nh))
+  mimg.putdata(pxs[ :nw * nh])
+
+  mimg.pixels = list(mimg.getdata())
+  mimg.copy = copy_image(mimg)
+  mimg.update_pixels = update_pixels(mimg)
+  return mimg
 
 ## Image Analyssis
 
