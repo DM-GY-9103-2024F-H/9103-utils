@@ -1,5 +1,7 @@
+import json
 import numpy as np
 import pandas as pd
+import urllib.request as request
 
 from numpy.linalg import det as np_det, inv as np_inv
 
@@ -13,6 +15,11 @@ from sklearn.preprocessing import StandardScaler as SklStandardScaler
 from sklearn.preprocessing import PolynomialFeatures as SklPolynomialFeatures
 
 
+def object_from_json_url(url):
+  with request.urlopen(url) as in_file:
+    return json.load(in_file)
+
+
 def regression_error(labels, predicted):
   if not (isinstance(labels, pd.core.frame.DataFrame) or isinstance(labels, pd.core.series.Series)):
     raise Exception("truth labels has wrong type. Please use pandas DataFrame or Series")
@@ -21,6 +28,7 @@ def regression_error(labels, predicted):
 
   return mean_squared_error(labels.values, predicted.values, squared=False)
 
+
 def classification_error(labels, predicted):
   if not (isinstance(labels, pd.core.frame.DataFrame) or isinstance(labels, pd.core.series.Series)):
     raise Exception("truth labels has wrong type. Please use pandas DataFrame or Series")
@@ -28,6 +36,7 @@ def classification_error(labels, predicted):
     raise Exception("predicted labels has wrong type. Please use pandas DataFrame or Series")
 
   return 1.0 - accuracy_score(labels.values, predicted.values)
+
 
 class PolynomialFeatures(SklPolynomialFeatures):
   def __init__(self, **kwargs):
