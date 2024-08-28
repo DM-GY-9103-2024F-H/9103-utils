@@ -209,7 +209,9 @@ class Clusterer():
     if self.num_clusters < 1:
       raise Exception("Error: need to run fit_predict() first")
     counts = np.unique(self.y, return_counts=True)[1]
-    return np.abs(counts / len(self.y) - (1 / self.num_clusters)).max()
+    sum_dists = np.abs(counts / len(self.y) - (1 / self.num_clusters)).sum()
+    scale_factor = 0.5 * self.num_clusters / (self.num_clusters - 1)
+    return scale_factor * sum_dists
 
 class LinearRegression(Predictor):
   def __init__(self, **kwargs):
