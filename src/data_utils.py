@@ -14,6 +14,7 @@ from sklearn.mixture import GaussianMixture as SklGaussianMixture
 from sklearn.preprocessing import MinMaxScaler as SklMinMaxScaler
 from sklearn.preprocessing import StandardScaler as SklStandardScaler
 from sklearn.preprocessing import PolynomialFeatures as SklPolynomialFeatures
+from sklearn.svm import SVC as SklSVC
 
 
 def object_from_json_url(url):
@@ -69,10 +70,14 @@ class Predictor():
   def __init__(self, type, **kwargs):
     if type == "linear":
       self.model = SklLinearRegression(**kwargs)
-    elif type == "class":
+    elif type == "forest":
       if "max_depth" not in kwargs:
-        kwargs["max_depth"]=16
+        kwargs["max_depth"] = 16
       self.model = SklRandomForestClassifier(**kwargs)
+    elif type == "svc":
+      if "kernel" not in kwargs:
+        kwargs["kernel"] = "linear"
+      self.model = SklSVC(**kwargs)
 
   def fit(self, X, y, *args, **kwargs):
     if not isinstance(X, pd.core.frame.DataFrame):
@@ -269,7 +274,11 @@ class LinearRegression(Predictor):
 
 class RandomForestClassifier(Predictor):
   def __init__(self, **kwargs):
-    super().__init__("class", **kwargs)
+    super().__init__("forest", **kwargs)
+
+class SVC(Predictor):
+  def __init__(self, **kwargs):
+    super().__init__("svc", **kwargs)
 
 class MinMaxScaler(Scaler):
   def __init__(self, **kwargs):
