@@ -6,6 +6,7 @@ import urllib.request as request
 from numpy.linalg import det as np_det, inv as np_inv
 
 from sklearn.cluster import KMeans as SklKMeans, SpectralClustering as SklSpectralClustering
+from sklearn.decomposition import PCA as SklPCA
 from sklearn.ensemble import RandomForestClassifier as SklRandomForestClassifier
 from sklearn.linear_model import LinearRegression as SklLinearRegression
 from sklearn.metrics import mean_squared_error, accuracy_score
@@ -212,6 +213,55 @@ class Clusterer():
     sum_dists = np.abs(counts / len(self.y) - (1 / self.num_clusters)).sum()
     scale_factor = 0.5 * self.num_clusters / (self.num_clusters - 1)
     return scale_factor * sum_dists
+
+
+class PCA(SklPCA):
+  def __init__(self, **kwargs):
+    super().__init__(**kwargs)
+    self.pc_labels = []
+
+  @staticmethod
+  def check_input(X):
+    if not isinstance(X, list):
+      raise Exception("Input has wrong type. Please use list of list of pixels")
+    if not isinstance(X[0], list):
+      raise Exception("Input has wrong type. Please use list of list of pixels")
+
+  def fit(self, X, *args, **kwargs):
+    PCA.check_input(X)
+    super().fit(X, *args, **kwargs)
+    self.pc_labels = [f"PC{i}" for i in range(self.n_components_)]
+
+  def transform(self, X, *args, **kwargs):
+    if len(self.pc_labels) != self.n_components_:
+      raise Exception("Error: need to run fit() first")
+    PCA.check_input(X)
+    X_t = super().transform(X, *args, **kwargs)
+    X_obj = [{f"PC{i}": v for i,v in enumerate(x)} for x in X_t]
+    return pd.DataFrame.from_records(X_obj)
+
+  def fit_transform(self, X, *args, **kwargs):
+    self.fit(X, *args, **kwargs)
+    return self.transform(X, *args, **kwargs)
+
+  def inverse_transform(self, X_t, *args, **kwargs):
+    if not (isinstance(X_t, pd.core.frame.DataFrame) or isinstance(X_t, pd.core.series.Series)):
+      raise Exception("Input has wrong type. Please use pandas DataFrame or Series")
+    if len(self.pc_labels) != self.n_components_:
+      raise Exception("Error: need to run fit() first")
+
+    X_t_np = X_t[self.pc_labels].values
+    if isinstance(X_t, pd.core.frame.DataFrame) and X_t_np.shape[1] != self.n_components_:
+      raise Exception("Input has wrong shape. Check number of features")
+    if isinstance(X_t, pd.core.series.Series) and X_t_np.shape[0] != self.n_components_:
+      raise Exception("Input has wrong shape. Check number of features")
+    return super().inverse_transform(X_t_np)
+
+  def explained_variance(self):
+    if len(self.pc_labels) != self.n_components_:
+      raise Exception("Error: need to run fit() first")
+    return sum(self.explained_variance_ratio_)
+
 
 class LinearRegression(Predictor):
   def __init__(self, **kwargs):
