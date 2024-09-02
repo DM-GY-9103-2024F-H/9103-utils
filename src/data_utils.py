@@ -224,23 +224,27 @@ class PCA(SklPCA):
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
     self.pc_labels = []
+    self.o_labels = None
 
-  @staticmethod
-  def check_input(X):
+  def check_input(self, X):
+    if isinstance(X, pd.core.frame.DataFrame):
+      self.o_labels = X.columns
+      X = X.values.tolist()
     if not isinstance(X, list):
       raise Exception("Input has wrong type. Please use list of list of pixels")
     if not isinstance(X[0], list):
       raise Exception("Input has wrong type. Please use list of list of pixels")
+    return X
 
   def fit(self, X, *args, **kwargs):
-    PCA.check_input(X)
+    X = self.check_input(X)
     super().fit(X, *args, **kwargs)
     self.pc_labels = [f"PC{i}" for i in range(self.n_components_)]
 
   def transform(self, X, *args, **kwargs):
     if len(self.pc_labels) != self.n_components_:
       raise Exception("Error: need to run fit() first")
-    PCA.check_input(X)
+    X = self.check_input(X)
     X_t = super().transform(X, *args, **kwargs)
     X_obj = [{f"PC{i}": v for i,v in enumerate(x)} for x in X_t]
     return pd.DataFrame.from_records(X_obj)
@@ -260,7 +264,9 @@ class PCA(SklPCA):
       raise Exception("Input has wrong shape. Check number of features")
     if isinstance(X_t, pd.core.series.Series) and X_t_np.shape[0] != self.n_components_:
       raise Exception("Input has wrong shape. Check number of features")
-    return super().inverse_transform(X_t_np)
+
+    X_i_np = super().inverse_transform(X_t_np)
+    return pd.DataFrame(X_i_np, columns=self.o_labels)
 
   def explained_variance(self):
     if len(self.pc_labels) != self.n_components_:
