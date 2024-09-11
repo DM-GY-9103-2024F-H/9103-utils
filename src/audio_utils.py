@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 
 ## Audio I/O
 
-def wav_to_list(wav_filename):
+def get_samples_and_rate(wav_filename):
   with wave.open(wav_filename, mode="rb") as wav_in:
     if wav_in.getsampwidth() != 2:
       raise Exception("Input not 16-bit")
@@ -16,8 +16,13 @@ def wav_to_list(wav_filename):
     nsamples = nchannels * nframes
     xb = wav_in.readframes(nframes)
     b_np = np.frombuffer(xb, dtype=np.int16)
+    samples = [int(sum(b_np[b0 : b0 + nchannels]) / nchannels) for b0 in range(0, nsamples, nchannels)]
 
-    return [int(sum(b_np[b0 : b0 + nchannels]) / nchannels) for b0 in range(0, nsamples, nchannels)]
+    return samples, wav_in.getframerate()
+
+def wav_to_list(wav_filename):
+  s, _ = get_samples_and_rate(wav_filename)
+  return s
 
 def list_to_wav(wav_array, wav_filename):
   xb = np.array(wav_array, dtype=np.int16).tobytes()
