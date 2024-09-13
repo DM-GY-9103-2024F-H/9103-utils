@@ -60,12 +60,11 @@ def stft(samples, window_len=1024):
   _, _freqs = fft(sample_windows[0], filter_factor=0)
   return _ffts, _freqs, _times
 
-def cluster_fft_freqs(energy_freqs, freqs=None, *, top=50, clusters=6):
-  if freqs is not None:
-    energy_freqs = [(e, round(f)) for e,f in zip(energy_freqs, freqs)]
+def cluster_fft_freqs(freqs, energy_freqs, *, top=50, clusters=6):
+  energy_freqs = [(round(f), e) for f,e in zip(freqs, energy_freqs)]
 
-  fft_sorted = sorted(energy_freqs, key=lambda x: x[0], reverse=True)[:top]
-  top_freqs = [[f[1]] for f in fft_sorted]
+  fft_sorted = sorted(energy_freqs, key=lambda x: x[1], reverse=True)[:top]
+  top_freqs = [[f[0]] for f in fft_sorted]
 
   kmeans = KMeans(n_clusters=clusters, n_init="auto").fit(top_freqs)
   return np.sort(kmeans.cluster_centers_, axis=0)[:, 0].astype(np.int16).tolist()
