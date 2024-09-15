@@ -9,12 +9,14 @@ from sklearn.cluster import KMeans as SklKMeans, SpectralClustering as SklSpectr
 from sklearn.decomposition import PCA as SklPCA
 from sklearn.ensemble import RandomForestClassifier as SklRandomForestClassifier
 from sklearn.linear_model import LinearRegression as SklLinearRegression
-from sklearn.metrics import mean_squared_error, accuracy_score
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, mean_squared_error
 from sklearn.mixture import GaussianMixture as SklGaussianMixture
 from sklearn.preprocessing import MinMaxScaler as SklMinMaxScaler
 from sklearn.preprocessing import StandardScaler as SklStandardScaler
 from sklearn.preprocessing import PolynomialFeatures as SklPolynomialFeatures
 from sklearn.svm import SVC as SklSVC
+
+from warnings import simplefilter
 
 
 def object_from_json_url(url):
@@ -33,11 +35,19 @@ def regression_error(labels, predicted):
 
 def classification_error(labels, predicted):
   if not (isinstance(labels, pd.core.frame.DataFrame) or isinstance(labels, pd.core.series.Series)):
-    raise Exception("truth labels has wrong type. Please use pandas DataFrame or Series")
+    try:
+      labels = pd.DataFrame(labels)
+    except:
+      raise Exception("truth labels has wrong type. Please use pandas DataFrame or Series")
   if not (isinstance(predicted, pd.core.frame.DataFrame) or isinstance(predicted, pd.core.series.Series)):
     raise Exception("predicted labels has wrong type. Please use pandas DataFrame or Series")
 
   return 1.0 - accuracy_score(labels.values, predicted.values)
+
+
+def display_confusion_matrix(labels, predicted, display_labels):
+  simplefilter(action='ignore', category=FutureWarning)
+  ConfusionMatrixDisplay.from_predictions(labels, predicted, display_labels=display_labels, xticks_rotation="vertical")
 
 
 class PolynomialFeatures(SklPolynomialFeatures):
