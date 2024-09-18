@@ -15,8 +15,8 @@ def get_samples_and_rate(wav_filename):
     nframes = wav_in.getnframes()
     nsamples = nchannels * nframes
     xb = wav_in.readframes(nframes)
-    b_np = np.frombuffer(xb, dtype=np.int16)
-    samples = [int(sum(b_np[b0 : b0 + nchannels]) / nchannels) for b0 in range(0, nsamples, nchannels)]
+    b_np = np.frombuffer(xb, dtype=np.int16) / nchannels
+    samples = [int(sum(b_np[b0 : b0 + nchannels])) for b0 in range(0, nsamples, nchannels)]
 
     return samples, wav_in.getframerate()
 
