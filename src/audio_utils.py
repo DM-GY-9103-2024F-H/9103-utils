@@ -25,6 +25,8 @@ def wav_to_list(wav_filename):
   return s
 
 def list_to_wav(wav_array, wav_filename):
+  lim = 2**15 - 1
+  wav_array = [max(min(i, lim), -lim) for i in wav_array]
   xb = np.array(wav_array, dtype=np.int16).tobytes()
   with wave.open(wav_filename, "w") as wav_out:
     wav_out.setnchannels(1)
