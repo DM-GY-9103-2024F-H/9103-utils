@@ -8,7 +8,10 @@ from scipy.ndimage import convolve
 ## Image Files
 
 def update_pixels(mimg):
-  def _update_pixels(pxs, width=None, height=None):
+  def _update_pixels(pxs=None, width=None, height=None):
+    if pxs is None:
+      pxs = mimg.pixels
+
     iw, ih = mimg.size
     if len(pxs) != iw * ih:
       ar = ih / iw
