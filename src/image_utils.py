@@ -68,14 +68,25 @@ def open_image(path):
   mimg.update_pixels = update_pixels(mimg)
   return mimg
 
+def to1d(ndarr):
+  if ndarr.shape[-1] == 3 or ndarr.shape[-1] == 4:
+    return ndarr.reshape(-1, ndarr.shape[-1]).tolist()
+  return ndarr.reshape(-1).tolist()
+
 def make_image(pxs, width=None, height=None):
+  if hasattr(pxs, "shape") and hasattr(pxs, "reshape"):
+    pxs = to1d(pxs)
+
   MODES = ["", "L", "XX", "RGB", "RGBA"]
   nw = int(len(pxs) ** 0.5) if width is None else width
   nh = int(len(pxs) // nw) if height is None else height
+
+  pxs = [tuple(p) for p in pxs] if type(pxs[0]) is list else pxs
+
   nc = len(pxs[0]) if type(pxs[0]) is tuple else 1
 
   mimg = PImage.new(MODES[nc], (nw,nh))
-  mimg.putdata(pxs[ :nw * nh])
+  mimg.putdata(pxs[ :(nw * nh)])
 
   mimg.pixels = list(mimg.getdata())
   mimg.copy = copy_image(mimg)
