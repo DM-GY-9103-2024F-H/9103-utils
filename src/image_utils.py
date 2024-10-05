@@ -108,7 +108,7 @@ def edges_rgb(img, rad=1.0):
   bimg.update_pixels(bdiffpx)
   return bimg
 
-def edges(img, rad=1.0):
+def edges_exp_thold(img, rad=1.0):
   bimg = blur(img, rad)
   pxs = img.pixels
   bpxs = bimg.pixels
@@ -119,6 +119,20 @@ def edges(img, rad=1.0):
 
   bimg.update_pixels(bdiffpx)
   return bimg
+
+def edges(img, rad=1, thold=16):
+  bimg = blur(img, rad)
+
+  # get luminance
+  gipxs = [(r+g+b)//3 for r,g,b in img.pixels]
+  gbpxs = [(r+g+b)//3 for r,g,b in bimg.pixels]
+
+  # subtract and threshold
+  epxs = [255 if (o-b)>thold else 0 for o,b in zip(gipxs, gbpxs)]
+
+  # prepare output
+  eimg = make_image(epxs, img.size[0])
+  return eimg
 
 def conv2d(img, kernel):
   pxs = np.array(img.convert("L").getdata()).reshape(img.size[1], -1).astype(np.uint8)
