@@ -323,7 +323,8 @@ class SpectralClustering(Clusterer):
 
 class LFWUtils:
   FACE_IMAGES = "./data/images/lfw/cropped"
-  LABELS = [d.split("-")[0] for d in sorted(listdir(FACE_IMAGES)) if d[0] in string.ascii_letters]
+  FACE_IMAGES_DIRS = sorted(listdir(FACE_IMAGES)) if path.isdir(FACE_IMAGES) else []
+  LABELS = [d.split("-")[0] for d in FACE_IMAGES_DIRS if d[0] in string.ascii_letters]
   L2I = {v:i for i,v in enumerate(LABELS)}
 
   @staticmethod
@@ -359,7 +360,10 @@ class LFWUtils:
   def top_precision(labels, predicted, top=5):
     labels_np = np.array(LFWUtils.LABELS)
     cm = confusion_matrix(labels, predicted)
-    precision = np.diagonal(cm) / np.sum(cm, axis=0)
+    precision_sum = np.sum(cm, axis=0)
+    precision = 0
+    if precision_sum != 0:
+      precision = np.diagonal(cm) / precision_sum
     top_idx = np.argsort(-precision)
     return list(labels_np[top_idx])[:top]
 
@@ -367,6 +371,9 @@ class LFWUtils:
   def top_recall(labels, predicted, top=5):
     labels_np = np.array(LFWUtils.LABELS)
     cm = confusion_matrix(labels, predicted)
-    recall = np.diagonal(cm) / np.sum(cm, axis=1)
+    recall_sum = np.sum(cm, axis=1)
+    recall = 0
+    if recall_sum != 0:
+      recall = np.diagonal(cm) / recall_sum
     top_idx = np.argsort(-recall)
     return list(labels_np[top_idx])[:top]
