@@ -190,14 +190,14 @@ class Clusterer():
     self.y = y
     self.num_clusters = len(np.unique(y))
     self.num_features = self.X.shape[1]
+    self.cluster_centers_ = np.array([self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)]).tolist()
     return pd.DataFrame(y, columns=["clusters"])
 
   def distance_error(self):
     if self.num_clusters < 1:
       raise Exception("Error: need to run fit_predict() first")
 
-    centers = np.array([self.X[self.y == c].mean(axis=0) for c in range(self.num_clusters)])
-    point_centers = [centers[i] for i in self.y]
+    point_centers = [self.cluster_centers_[i] for i in self.y]
     point_diffs = np.array([p - c for p,c in zip(self.X, point_centers)])
 
     cluster_L2 = [np.sqrt(np.square(point_diffs[self.y == c]).sum(axis=1)).mean() for c in range(self.num_clusters)]
