@@ -13,7 +13,7 @@ from sklearn.cluster import KMeans as SklKMeans, SpectralClustering as SklSpectr
 from sklearn.decomposition import PCA as SklPCA
 from sklearn.ensemble import RandomForestClassifier as SklRandomForestClassifier
 from sklearn.linear_model import LinearRegression as SklLinearRegression
-from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, confusion_matrix, mean_squared_error
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, confusion_matrix, root_mean_squared_error
 from sklearn.mixture import GaussianMixture as SklGaussianMixture
 from sklearn.preprocessing import MinMaxScaler as SklMinMaxScaler
 from sklearn.preprocessing import StandardScaler as SklStandardScaler
@@ -34,7 +34,7 @@ def regression_error(labels, predicted):
   if not (isinstance(predicted, pd.core.frame.DataFrame) or isinstance(predicted, pd.core.series.Series)):
     raise Exception("predicted labels has wrong type. Please use pandas DataFrame or Series")
 
-  return mean_squared_error(labels.values, predicted.values, squared=False)
+  return root_mean_squared_error(labels.values, predicted.values)
 
 
 def classification_error(labels, predicted):
