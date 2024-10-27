@@ -75,6 +75,10 @@ def to1d(ndarr):
 
 def make_image(pxs, width=None, height=None):
   if hasattr(pxs, "shape") and hasattr(pxs, "reshape"):
+    if hasattr(pxs, "int"):
+      pxs = pxs.int()
+    if hasattr(pxs, "astype"):
+      pxs = pxs.astype("int")
     pxs = to1d(pxs)
 
   MODES = ["", "L", "XX", "RGB", "RGBA"]
