@@ -101,6 +101,7 @@ class Predictor():
 
     self.y_name = y.name if len(y.shape) == 1 else y.columns[0]
     self.model.fit(X.values, y.values, *args, **kwargs)
+    return self
 
   def predict(self, X, *args, **kwargs):
     if not isinstance(X, pd.core.frame.DataFrame):
