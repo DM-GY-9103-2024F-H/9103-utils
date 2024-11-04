@@ -365,17 +365,17 @@ class LFWUtils:
     labels_np = np.array(LFWUtils.LABELS)
     cm = confusion_matrix(labels, predicted)
     precision_sum = np.sum(cm, axis=0)
-    # negative for reverse sorting
-    precision = [-ps/t if t != 0 else 0 for ps,t in zip(precision_sum, np.diagonal(cm))]
+    precision = [c/t if t != 0 else 0 for c,t in zip(np.diagonal(cm), precision_sum)]
     top_idx = np.argsort(precision)
-    return list(labels_np[top_idx])[:top]
+    top_precision = list(reversed(labels_np[top_idx]))
+    return top_precision[:top]
 
   @staticmethod
   def top_recall(labels, predicted, top=5):
     labels_np = np.array(LFWUtils.LABELS)
     cm = confusion_matrix(labels, predicted)
     recall_sum = np.sum(cm, axis=1)
-    # negative for reverse sorting
-    recall = [-ps/t if t != 0 else 0 for ps,t in zip(recall_sum, np.diagonal(cm))]
+    recall = [c/t if t != 0 else 0 for c,t in zip(np.diagonal(cm), recall_sum)]
     top_idx = np.argsort(recall)
-    return list(labels_np[top_idx])[:top]
+    top_recall = list(reversed(labels_np[top_idx]))
+    return top_recall[:top]
