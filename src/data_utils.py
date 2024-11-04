@@ -362,10 +362,9 @@ class LFWUtils:
     labels_np = np.array(LFWUtils.LABELS)
     cm = confusion_matrix(labels, predicted)
     precision_sum = np.sum(cm, axis=0)
-    precision = 0
-    if precision_sum != 0:
-      precision = np.diagonal(cm) / precision_sum
-    top_idx = np.argsort(-precision)
+    # negative for reverse sorting
+    precision = [-ps/t if t != 0 else 0 for ps,t in zip(precision_sum, np.diagonal(cm))]
+    top_idx = np.argsort(precision)
     return list(labels_np[top_idx])[:top]
 
   @staticmethod
@@ -373,8 +372,7 @@ class LFWUtils:
     labels_np = np.array(LFWUtils.LABELS)
     cm = confusion_matrix(labels, predicted)
     recall_sum = np.sum(cm, axis=1)
-    recall = 0
-    if recall_sum != 0:
-      recall = np.diagonal(cm) / recall_sum
-    top_idx = np.argsort(-recall)
+    # negative for reverse sorting
+    recall = [-ps/t if t != 0 else 0 for ps,t in zip(recall_sum, np.diagonal(cm))]
+    top_idx = np.argsort(recall)
     return list(labels_np[top_idx])[:top]
