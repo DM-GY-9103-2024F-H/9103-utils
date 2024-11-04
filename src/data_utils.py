@@ -44,7 +44,10 @@ def classification_error(labels, predicted):
     except:
       raise Exception("truth labels has wrong type. Please use pandas DataFrame or Series")
   if not (isinstance(predicted, pd.core.frame.DataFrame) or isinstance(predicted, pd.core.series.Series)):
-    raise Exception("predicted labels has wrong type. Please use pandas DataFrame or Series")
+    try:
+      predicted = pd.DataFrame(predicted)
+    except:
+      raise Exception("predicted labels has wrong type. Please use pandas DataFrame or Series")
 
   return 1.0 - accuracy_score(labels.values, predicted.values)
 
