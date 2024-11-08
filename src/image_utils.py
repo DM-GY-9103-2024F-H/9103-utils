@@ -66,6 +66,14 @@ def resize_image(mimg):
     return mimg
   return _resize
 
+def crop_image(mimg):
+  super_crop = mimg.crop
+  def _crop(*args, **kwargs):
+    cimg = super_crop(*args, **kwargs)
+    mimg = make_image(list(cimg.getdata()), cimg.size[0])
+    return mimg
+  return _crop
+
 def open_image(path):
   pimg = PImage.open(path)
   mimg = make_image(list(pimg.getdata()), pimg.size[0])
@@ -99,6 +107,7 @@ def make_image(pxs, width=None, height=None):
   mimg.copy = copy_image(mimg)
   mimg.update_pixels = update_pixels(mimg)
   mimg.resize = resize_image(mimg)
+  mimg.crop = crop_image(mimg)
   return mimg
 
 ## Image Analyssis
