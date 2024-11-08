@@ -54,18 +54,21 @@ def copy_image(mimg):
   super_copy = mimg.copy
   def _copy():
     cimg = super_copy()
-    cimg.pixels = mimg.pixels[:]
-    cimg.update_pixels = update_pixels(cimg)
-    cimg.copy = copy_image(cimg)
-    return cimg
+    mimg = make_image(list(cimg.getdata()), cimg.size[0])
+    return mimg
   return _copy
 
-def open_image(path):
-  mimg = PImage.open(path)
-  mimg.pixels = list(mimg.getdata())
+def resize_image(mimg):
+  super_resize = mimg.resize
+  def _resize(*args, **kwargs):
+    rimg = super_resize(*args, **kwargs)
+    mimg = make_image(list(rimg.getdata()), rimg.size[0])
+    return mimg
+  return _resize
 
-  mimg.copy = copy_image(mimg)
-  mimg.update_pixels = update_pixels(mimg)
+def open_image(path):
+  pimg = PImage.open(path)
+  mimg = make_image(list(pimg.getdata()), pimg.size[0])
   return mimg
 
 def to1d(ndarr):
@@ -95,6 +98,7 @@ def make_image(pxs, width=None, height=None):
   mimg.pixels = list(mimg.getdata())
   mimg.copy = copy_image(mimg)
   mimg.update_pixels = update_pixels(mimg)
+  mimg.resize = resize_image(mimg)
   return mimg
 
 ## Image Analyssis
