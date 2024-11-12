@@ -330,12 +330,22 @@ class LFWUtils:
   FACE_IMAGES_DIRS = sorted(listdir(FACE_IMAGES)) if path.isdir(FACE_IMAGES) else []
   LABELS = [d.split("-")[0] for d in FACE_IMAGES_DIRS if d[0] in string.ascii_letters]
   L2I = {v:i for i,v in enumerate(LABELS)}
+  IMAGE_SIZE = None
+
+  @staticmethod
+  def image_size():
+    dir_path = path.join(LFWUtils.FACE_IMAGES, LFWUtils.FACE_IMAGES_DIRS[0])
+    dir_img = [f for f in listdir(dir_path) if f.endswith(".jpeg") or f.endswith(".jpg")][0]
+    return PImage.open(path.join(dir_path, dir_img)).size
 
   @staticmethod
   def train_test_split(test_pct=0.5, random_state=101010):
     seed(random_state)
     dataset = { k : { "pixels": [], "labels": [], "files": [] } for k in ["test", "train"] }
     label_files = { k : [] for k in dataset.keys() }
+
+    if LFWUtils.IMAGE_SIZE is None:
+      LFWUtils.IMAGE_SIZE = LFWUtils.image_size()
 
     for label in LFWUtils.LABELS:
       label_path = path.join(LFWUtils.FACE_IMAGES, label)
