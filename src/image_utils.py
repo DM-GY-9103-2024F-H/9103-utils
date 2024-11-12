@@ -85,7 +85,12 @@ def to1d(ndarr):
   return ndarr.reshape(-1).tolist()
 
 def make_image(pxs, width=None, height=None):
-  if hasattr(pxs, "shape") and hasattr(pxs, "reshape"):
+  if hasattr(pxs, "iloc") and hasattr(pxs, "values"):
+    pxs = pxs.values
+    if len(pxs.shape) < 2:
+      pxs = pxs.reshape(-1, 1)
+    pxs = to1d(pxs)
+  elif hasattr(pxs, "shape") and hasattr(pxs, "reshape"):
     if hasattr(pxs, "int"):
       pxs = pxs.int()
     if hasattr(pxs, "astype"):
