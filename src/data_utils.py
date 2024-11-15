@@ -327,7 +327,12 @@ class SpectralClustering(Clusterer):
 
 class LFWUtils:
   FACE_IMAGES = "./data/images/lfw/cropped"
-  FACE_IMAGES_DIRS = sorted(listdir(FACE_IMAGES)) if path.isdir(FACE_IMAGES) else []
+  FACE_IMAGES_DIRS = []
+  if path.isdir(FACE_IMAGES):
+    FACE_IMAGES_DIRS = sorted(listdir(FACE_IMAGES))
+  elif path.isdir(FACE_IMAGES.replace("/cropped", "")):
+    FACE_IMAGES_DIRS = sorted(listdir(FACE_IMAGES))
+
   LABELS = [d.split("-")[0] for d in FACE_IMAGES_DIRS if d[0] in string.ascii_letters]
   L2I = {v:i for i,v in enumerate(LABELS)}
   IMAGE_SIZE = None
