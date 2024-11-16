@@ -328,7 +328,7 @@ class SpectralClustering(Clusterer):
 class LFWUtils:
   FACE_IMAGES = "./data/images/lfw/cropped"
   if not path.isdir(FACE_IMAGES):
-    FACE_IMAGES = FACE_IMAGES.replace("/images/lfw/cropped", "/image/lfw")
+    FACE_IMAGES = FACE_IMAGES.replace("/images/lfw/", "/image/lfw/")
 
   FACE_IMAGES_DIRS = sorted(listdir(FACE_IMAGES)) if path.isdir(FACE_IMAGES) else []
 
