@@ -20,12 +20,12 @@ jobs:
     - name: Zip Files
       run: |
         ln -s datasets data
+        tar -czf att-faces.tar.gz data/image/att-faces
+        tar -czf metfaces.tar.gz data/image/metfaces
         tar --exclude='data/audio/instruments/raw' -czf instruments.tar.gz data/audio/instruments
         tar --exclude='data/image/0801-500/all' -czf 0801-500.tar.gz data/image/0801-500
-        tar -czf att-faces.tar.gz data/image/att-faces
-        tar -czf lfw.tar.gz data/image/lfw
-        tar -czf metfaces.tar.gz data/image/metfaces
         tar --exclude='data/image/forest-tree/raw' -czf forest-tree.tar.gz data/image/forest-tree
+        tar --exclude='data/image/lfw/raw' -czf lfw.tar.gz data/image/lfw
 
     - name: Tag Release
       id: tag
