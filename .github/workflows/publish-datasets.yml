@@ -3,7 +3,9 @@ name: Publish dataset zips
 on:
   push:
     branches: [ "main" ]
-    paths: ["datasets/audio/**", "datasets/image/**"]
+    paths:
+      - "datasets/audio/**/*"
+      - "datasets/image/**/*"
 
 jobs:
   build:
@@ -18,7 +20,7 @@ jobs:
     - name: Zip Files
       run: |
         ln -s datasets data
-        tar -czf instruments.tar.gz data/audio/instruments
+        tar --exclude='data/audio/instruments/raw' -czf instruments.tar.gz data/audio/instruments
         tar --exclude='data/image/0801-500/all' -czf 0801-500.tar.gz data/image/0801-500
         tar -czf att-faces.tar.gz data/image/att-faces
         tar -czf lfw.tar.gz data/image/lfw
