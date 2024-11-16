@@ -3,9 +3,9 @@ name: Publish dataset zips
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - "datasets/audio/**/*"
-      - "datasets/image/**/*"
+    # paths:
+    #   - "datasets/audio/**/*"
+    #   - "datasets/image/**/*"
 
 jobs:
   build:
