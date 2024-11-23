@@ -334,7 +334,8 @@ class LFWUtils:
 
   LABELS = [d.split("-")[0] for d in FACE_IMAGES_DIRS if d[0] in string.ascii_letters]
   L2I = {v:i for i,v in enumerate(LABELS)}
-  IMAGE_SIZE = None
+
+  IMAGE_SIZE = LFWUtils.image_size()
 
   @staticmethod
   def image_size():
@@ -347,9 +348,6 @@ class LFWUtils:
     seed(random_state)
     dataset = { k : { "pixels": [], "labels": [], "files": [] } for k in ["test", "train"] }
     label_files = { k : [] for k in dataset.keys() }
-
-    if LFWUtils.IMAGE_SIZE is None:
-      LFWUtils.IMAGE_SIZE = LFWUtils.image_size()
 
     for label in LFWUtils.LABELS:
       label_path = path.join(LFWUtils.FACE_IMAGES, label)
