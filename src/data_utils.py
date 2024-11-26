@@ -331,13 +331,14 @@ class LFWUtils:
     FACE_IMAGES = FACE_IMAGES.replace("/images/lfw/", "/image/lfw/")
 
   FACE_IMAGES_DIRS = sorted(listdir(FACE_IMAGES)) if path.isdir(FACE_IMAGES) else []
-  FACE_IMAGES_DIRS_PATH = path.join(FACE_IMAGES, FACE_IMAGES_DIRS[0])
-  _first_img = [f for f in listdir(FACE_IMAGES_DIRS_PATH) if f.endswith(".jpeg") or f.endswith(".jpg")][0]
 
   LABELS = [d.split("-")[0] for d in FACE_IMAGES_DIRS if d[0] in string.ascii_letters]
   L2I = {v:i for i,v in enumerate(LABELS)}
 
-  IMAGE_SIZE = PImage.open(path.join(FACE_IMAGES_DIRS_PATH, _first_img)).size
+  if len(FACE_IMAGES_DIRS) > 0:
+    FACE_IMAGES_DIRS_PATH = path.join(FACE_IMAGES, FACE_IMAGES_DIRS[0])
+    _first_img = [f for f in listdir(FACE_IMAGES_DIRS_PATH) if f.endswith(".jpeg") or f.endswith(".jpg")][0]
+    IMAGE_SIZE = PImage.open(path.join(FACE_IMAGES_DIRS_PATH, _first_img)).size
 
   @staticmethod
   def train_test_split(test_pct=0.5, random_state=101010):
