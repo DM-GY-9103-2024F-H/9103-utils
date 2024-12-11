@@ -6,6 +6,7 @@ on:
     paths:
       - "datasets/audio/**/*"
       - "datasets/image/**/*"
+      - ".github/workflows/publish-datasets.yml"
 
 jobs:
   build:
