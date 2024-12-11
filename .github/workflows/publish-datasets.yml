@@ -24,6 +24,7 @@ jobs:
         tar -czf metfaces.tar.gz data/image/metfaces
         tar -czf clouds.tar.gz data/image/clouds
         tar -czf flowers.tar.gz data/image/flowers
+        tar -czf bob-ross.tar.gz data/image/bob-ross
         tar --exclude='data/audio/instruments/raw' -czf instruments.tar.gz data/audio/instruments
         tar --exclude='data/image/0801-500/all' -czf 0801-500.tar.gz data/image/0801-500
         tar --exclude='data/image/forest-tree/raw' -czf forest-tree.tar.gz data/image/forest-tree
