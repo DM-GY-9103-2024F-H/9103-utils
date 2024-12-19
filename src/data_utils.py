@@ -102,7 +102,7 @@ class Predictor():
     if not (isinstance(y, pd.core.frame.DataFrame) or isinstance(y, pd.core.series.Series)):
       raise Exception("Label input has wrong type. Please use pandas DataFrame or Series")
 
-    self.y_name = y.name if len(y.shape) == 1 else y.columns[0]
+    self.y_name = [y.name] if len(y.shape) == 1 else y.columns.values
     self.model.fit(X.values, y.values, *args, **kwargs)
     return self
 
@@ -110,7 +110,7 @@ class Predictor():
     if not isinstance(X, pd.core.frame.DataFrame):
       raise Exception("Feature input has wrong type. Please use pandas DataFrame")
     y_t = self.model.predict(X.values, *args, **kwargs)
-    return pd.DataFrame(y_t, columns=[self.y_name])
+    return pd.DataFrame(y_t, columns=self.y_name)
 
 
 class Scaler():
